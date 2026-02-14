@@ -4,11 +4,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.cedarxuesong.translate_allinone.utils.config.pojos.ChatTranslateConfig;
+import com.cedarxuesong.translate_allinone.utils.config.pojos.ApiInstance;
 import com.cedarxuesong.translate_allinone.utils.config.pojos.CustomParameterEntry;
-import com.cedarxuesong.translate_allinone.utils.config.pojos.ItemTranslateConfig;
 import com.cedarxuesong.translate_allinone.utils.config.pojos.Provider;
-import com.cedarxuesong.translate_allinone.utils.config.pojos.ScoreboardConfig;
 
 /**
  * 一个用于封装不同翻译提供商API设置的记录。
@@ -24,120 +22,37 @@ public record ProviderSettings(OpenAISettings openAISettings, OllamaSettings oll
         return new ProviderSettings(null, settings);
     }
 
-    public static ProviderSettings fromItemConfig(ItemTranslateConfig config) {
-        if (config.llm_provider == Provider.OPENAI) {
-            Map<String, Object> customParams = toParameterMap(config.openapi.custom_parameters);
+    /**
+     * Creates ProviderSettings from a centralized ApiInstance with per-feature overrides for
+     * temperature and structured output.
+     */
+    public static ProviderSettings fromApiInstance(ApiInstance instance, double temperature, boolean enableStructuredOutput) {
+        if (instance.llm_provider == Provider.OPENAI) {
+            Map<String, Object> customParams = toParameterMap(instance.openapi.custom_parameters);
             OpenAISettings settings = new OpenAISettings(
-                    config.openapi.baseUrl,
-                    config.openapi.apiKey,
-                    config.openapi.modelId,
-                    config.openapi.temperature,
-                    config.openapi.enable_structured_output_if_available,
+                    instance.openapi.baseUrl,
+                    instance.openapi.apiKey,
+                    instance.openapi.modelId,
+                    temperature,
+                    enableStructuredOutput,
                     customParams
             );
             return new ProviderSettings(settings, null);
-        } else if (config.llm_provider == Provider.OLLAMA) {
+        } else if (instance.llm_provider == Provider.OLLAMA) {
             Map<String, Object> options = new java.util.HashMap<>();
-            options.put("temperature", config.ollama.temperature);
-            options.putAll(toParameterMap(config.ollama.custom_parameters));
-            
+            options.put("temperature", temperature);
+            options.putAll(toParameterMap(instance.ollama.custom_parameters));
+
             OllamaSettings settings = new OllamaSettings(
-                    config.ollama.ollamaUrl,
-                    config.ollama.modelId,
-                    config.ollama.keep_alive_time,
-                    config.ollama.enable_structured_output_if_available,
+                    instance.ollama.ollamaUrl,
+                    instance.ollama.modelId,
+                    instance.ollama.keep_alive_time,
+                    enableStructuredOutput,
                     options
             );
             return new ProviderSettings(null, settings);
         }
         return new ProviderSettings(null, null);
-    }
-
-    public static ProviderSettings fromScoreboardConfig(ScoreboardConfig config) {
-        if (config.llm_provider == Provider.OPENAI) {
-            Map<String, Object> customParams = toParameterMap(config.openapi.custom_parameters);
-            OpenAISettings settings = new OpenAISettings(
-                    config.openapi.baseUrl,
-                    config.openapi.apiKey,
-                    config.openapi.modelId,
-                    config.openapi.temperature,
-                    config.openapi.enable_structured_output_if_available,
-                    customParams
-            );
-            return new ProviderSettings(settings, null);
-        } else if (config.llm_provider == Provider.OLLAMA) {
-            Map<String, Object> options = new java.util.HashMap<>();
-            options.put("temperature", config.ollama.temperature);
-            options.putAll(toParameterMap(config.ollama.custom_parameters));
-            
-            OllamaSettings settings = new OllamaSettings(
-                    config.ollama.ollamaUrl,
-                    config.ollama.modelId,
-                    config.ollama.keep_alive_time,
-                    config.ollama.enable_structured_output_if_available,
-                    options
-            );
-            return new ProviderSettings(null, settings);
-        }
-        return new ProviderSettings(null, null);
-    }
-
-    public static ProviderSettings fromChatInputConfig(ChatTranslateConfig.ChatInputTranslateConfig config) {
-        if (config.llm_provider == Provider.OLLAMA) {
-            ChatTranslateConfig.ChatInputTranslateConfig.OllamaApi ollama = config.ollama;
-            Map<String, Object> options = new java.util.HashMap<>();
-            options.put("temperature", ollama.temperature);
-            options.putAll(toParameterMap(ollama.custom_parameters));
-            ProviderSettings.OllamaSettings settings = new ProviderSettings.OllamaSettings(
-                    ollama.ollamaUrl,
-                    ollama.modelId,
-                    ollama.keep_alive_time,
-                    ollama.enable_structured_output_if_available,
-                    options
-            );
-            return ProviderSettings.fromOllama(settings);
-        } else {
-            ChatTranslateConfig.ChatInputTranslateConfig.OpenaiApi openai = config.openapi;
-            Map<String, Object> customParams = toParameterMap(openai.custom_parameters);
-            ProviderSettings.OpenAISettings settings = new ProviderSettings.OpenAISettings(
-                    openai.baseUrl,
-                    openai.apiKey,
-                    openai.modelId,
-                    openai.temperature,
-                    openai.enable_structured_output_if_available,
-                    customParams
-            );
-            return ProviderSettings.fromOpenAI(settings);
-        }
-    }
-
-    public static ProviderSettings fromChatOutputConfig(ChatTranslateConfig.ChatOutputTranslateConfig config) {
-        if (config.llm_provider == Provider.OLLAMA) {
-            ChatTranslateConfig.ChatOutputTranslateConfig.OllamaApi ollama = config.ollama;
-            Map<String, Object> options = new java.util.HashMap<>();
-            options.put("temperature", ollama.temperature);
-            options.putAll(toParameterMap(ollama.custom_parameters));
-            ProviderSettings.OllamaSettings settings = new ProviderSettings.OllamaSettings(
-                    ollama.ollamaUrl,
-                    ollama.modelId,
-                    ollama.keep_alive_time,
-                    ollama.enable_structured_output_if_available,
-                    options
-            );
-            return ProviderSettings.fromOllama(settings);
-        } else {
-            ChatTranslateConfig.ChatOutputTranslateConfig.OpenaiApi openai = config.openapi;
-            Map<String, Object> customParams = toParameterMap(openai.custom_parameters);
-            ProviderSettings.OpenAISettings settings = new ProviderSettings.OpenAISettings(
-                    openai.baseUrl,
-                    openai.apiKey,
-                    openai.modelId,
-                    openai.temperature,
-                    openai.enable_structured_output_if_available,
-                    customParams
-            );
-            return ProviderSettings.fromOpenAI(settings);
-        }
     }
 
     private static Map<String, Object> toParameterMap(List<CustomParameterEntry> customParameters) {

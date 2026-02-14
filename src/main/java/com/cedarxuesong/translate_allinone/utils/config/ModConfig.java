@@ -3,6 +3,7 @@ package com.cedarxuesong.translate_allinone.utils.config;
 import com.cedarxuesong.translate_allinone.Translate_AllinOne;
 import com.cedarxuesong.translate_allinone.utils.config.pojos.ChatTranslateConfig;
 import com.cedarxuesong.translate_allinone.utils.config.pojos.ItemTranslateConfig;
+import com.cedarxuesong.translate_allinone.utils.config.pojos.LLMApiConfig;
 import com.cedarxuesong.translate_allinone.utils.config.pojos.ScoreboardConfig;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
@@ -10,6 +11,10 @@ import me.shedaniel.autoconfig.annotation.ConfigEntry;
 
 @Config(name = Translate_AllinOne.MOD_ID + "/" + Translate_AllinOne.MOD_ID)
 public class ModConfig implements ConfigData {
+
+    @ConfigEntry.Category("llm_api")
+    @ConfigEntry.Gui.TransitiveObject
+    public LLMApiConfig llmApi = new LLMApiConfig();
 
     @ConfigEntry.Category("chat_translate")
     @ConfigEntry.Gui.TransitiveObject
