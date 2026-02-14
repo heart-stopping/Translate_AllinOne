@@ -8,6 +8,7 @@ import com.cedarxuesong.translate_allinone.utils.llmapi.ProviderSettings;
 import com.cedarxuesong.translate_allinone.utils.llmapi.openai.OpenAIRequest;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -20,6 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 
 public class ChatInputTranslateManager {
 
@@ -32,6 +34,95 @@ public class ChatInputTranslateManager {
 
     private static final AtomicBoolean isTranslating = new AtomicBoolean(false);
     private static final AtomicReference<String> originalTextRef = new AtomicReference<>("");
+
+    /**
+     * Intercepts an outgoing chat message for automatic translation before sending.
+     * Called from the ChatScreenMixin when the user presses Enter to send a message.
+     *
+     * @param chatText the message text the user is sending
+     * @param addToHistory whether to add to chat history
+     * @param chatScreen the current ChatScreen instance
+     * @param sendCallback callback to invoke on the main thread with the translated text
+     * @return true if the message was intercepted for translation (caller should cancel the original send)
+     */
+    public static boolean interceptAndTranslate(String chatText, boolean addToHistory, ChatScreen chatScreen, Consumer<String> sendCallback) {
+        ModConfig config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
+        if (!config.chatTranslate.input.enabled) {
+            return false;
+        }
+
+        if (chatText.trim().isEmpty() || chatText.startsWith("/")) {
+            return false;
+        }
+
+        if (!isTranslating.compareAndSet(false, true)) {
+            return false;
+        }
+
+        executor.submit(() -> {
+            try {
+                ChatTranslateConfig.ChatInputTranslateConfig inputConfig = config.chatTranslate.input;
+                ApiInstance apiInstance = config.llmApi.findByName(inputConfig.api_instance_name);
+                ProviderSettings settings = ProviderSettings.fromApiInstance(apiInstance, inputConfig.temperature, inputConfig.enable_structured_output_if_available);
+                LLM llm = new LLM(settings);
+                List<OpenAIRequest.Message> apiMessages = getMessages(inputConfig, chatText);
+
+                String result;
+                if (inputConfig.streaming_response) {
+                    final StringBuilder visibleContentBuffer = new StringBuilder();
+                    final StringBuilder rawResponseBuffer = new StringBuilder();
+                    final AtomicBoolean inThinkTag = new AtomicBoolean(false);
+
+                    llm.getStreamingCompletion(apiMessages).forEach(chunk -> {
+                        rawResponseBuffer.append(chunk);
+                        while (true) {
+                            if (inThinkTag.get()) {
+                                int endTagIndex = rawResponseBuffer.indexOf("</think>");
+                                if (endTagIndex != -1) {
+                                    inThinkTag.set(false);
+                                    rawResponseBuffer.delete(0, endTagIndex + "</think>".length());
+                                    continue;
+                                }
+                                break;
+                            } else {
+                                int startTagIndex = rawResponseBuffer.indexOf("<think>");
+                                if (startTagIndex != -1) {
+                                    visibleContentBuffer.append(rawResponseBuffer.substring(0, startTagIndex));
+                                    rawResponseBuffer.delete(0, startTagIndex + "<think>".length());
+                                    inThinkTag.set(true);
+                                    continue;
+                                } else {
+                                    visibleContentBuffer.append(rawResponseBuffer.toString());
+                                    rawResponseBuffer.setLength(0);
+                                    break;
+                                }
+                            }
+                        }
+                    });
+                    result = visibleContentBuffer.toString().stripLeading();
+                } else {
+                    result = llm.getCompletion(apiMessages).join().stripLeading();
+                }
+
+                final String finalTranslation = result;
+                LOGGER.info("[Chat-Input-Translate] Translated '{}' -> '{}'", chatText, finalTranslation);
+
+                MinecraftClient.getInstance().execute(() -> sendCallback.accept(finalTranslation));
+            } catch (Exception e) {
+                LOGGER.error("[Chat-Input-Translate] Exception during send-time translation", e);
+                MinecraftClient.getInstance().execute(() -> {
+                    Text errorMessage = Text.literal("Chat Input Translation Error: " + e.getMessage()).formatted(Formatting.RED);
+                    MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(errorMessage);
+                    // Send the original untranslated message so the user's message isn't lost
+                    sendCallback.accept(chatText);
+                });
+            } finally {
+                isTranslating.set(false);
+            }
+        });
+
+        return true;
+    }
 
     public static void translate(TextFieldWidget chatField) {
         if (!isTranslating.compareAndSet(false, true)) {
