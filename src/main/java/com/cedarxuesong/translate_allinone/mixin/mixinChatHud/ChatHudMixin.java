@@ -44,6 +44,7 @@ public abstract class ChatHudMixin {
         isProcessing.set(true);
         pendingMessageId.remove();
 
+        try {
         ModConfig config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
         if (config.chatTranslate.output.enabled) {
                 String plainText = AnimationManager.stripFormatting(message.getString()).trim();
@@ -68,6 +69,10 @@ public abstract class ChatHudMixin {
                 }
         }
         return message;
+        } catch (Exception e) {
+            isProcessing.set(false);
+            return message;
+        }
     }
 
     @Unique
