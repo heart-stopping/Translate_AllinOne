@@ -14,7 +14,6 @@ public class ApiInstance {
     @ConfigEntry.Gui.EnumHandler(option = ConfigEntry.Gui.EnumHandler.EnumDisplayOption.BUTTON)
     public Provider llm_provider = Provider.OPENAI;
 
-    @ConfigEntry.Gui.PrefixText
     public String baseUrl = "https://api.openai.com/v1";
 
     @ConfigEntry.Gui.Tooltip

@@ -16,11 +16,10 @@ import java.util.stream.Stream;
 public class OpenAIClient {
 
     private static final Gson GSON = new Gson();
-    private final HttpClient httpClient;
+    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private final ProviderSettings.OpenAISettings settings;
 
     public OpenAIClient(ProviderSettings.OpenAISettings settings) {
-        this.httpClient = HttpClient.newHttpClient();
         this.settings = settings;
     }
 
@@ -53,7 +52,7 @@ public class OpenAIClient {
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
 
-        return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
+        return HTTP_CLIENT.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> {
                     if (response.statusCode() != 200) {
                         OpenAIError error = GSON.fromJson(response.body(), OpenAIError.class);
@@ -84,7 +83,7 @@ public class OpenAIClient {
                 .build();
 
         try {
-            HttpResponse<Stream<String>> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofLines());
+            HttpResponse<Stream<String>> response = HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofLines());
 
             if (response.statusCode() != 200) {
                 String errorBody = response.body().collect(Collectors.joining("\n"));

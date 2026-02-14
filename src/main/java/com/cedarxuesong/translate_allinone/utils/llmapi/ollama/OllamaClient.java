@@ -16,11 +16,10 @@ import java.util.stream.Stream;
 public class OllamaClient {
 
     private static final Gson GSON = new Gson();
-    private final HttpClient httpClient;
+    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private final ProviderSettings.OllamaSettings settings;
 
     public OllamaClient(ProviderSettings.OllamaSettings settings) {
-        this.httpClient = HttpClient.newHttpClient();
         this.settings = settings;
     }
 
@@ -34,7 +33,7 @@ public class OllamaClient {
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
 
-        return httpClient.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
+        return HTTP_CLIENT.sendAsync(httpRequest, HttpResponse.BodyHandlers.ofString())
                 .thenApply(response -> {
                     if (response.statusCode() != 200) {
                         // Ollama的错误格式可能不同，但我们尝试用OpenAI的格式解析
@@ -57,7 +56,7 @@ public class OllamaClient {
                 .build();
 
         try {
-            HttpResponse<Stream<String>> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofLines());
+            HttpResponse<Stream<String>> response = HTTP_CLIENT.send(httpRequest, HttpResponse.BodyHandlers.ofLines());
 
             if (response.statusCode() != 200) {
                 String errorBody = response.body().collect(Collectors.joining("\n"));
