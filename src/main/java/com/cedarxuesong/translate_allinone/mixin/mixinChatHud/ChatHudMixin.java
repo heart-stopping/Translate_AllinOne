@@ -37,6 +37,8 @@ public abstract class ChatHudMixin {
 
     @ModifyVariable(method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V", at = @At("HEAD"), argsOnly = true)
     private Text onAddMessage(Text message) {
+        pendingMessageId.remove();
+
         if (isModifyingMessage.get() || !LifecycleEventManager.isReadyForTranslation) {
             return message;
         }

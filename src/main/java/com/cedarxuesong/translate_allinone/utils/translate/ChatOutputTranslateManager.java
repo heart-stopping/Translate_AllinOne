@@ -95,7 +95,7 @@ public class ChatOutputTranslateManager {
             for (int i = 0; i < messages.size(); i++) {
                 ChatHudLine line = messages.get(i);
                 String lineString = line.content().getString();
-                if (lineString.equals(originalString) || lineString.startsWith(originalString)) {
+                if (lineString.equals(originalString)) {
                     lineIndex = i;
                     targetLine = line;
                     break;
