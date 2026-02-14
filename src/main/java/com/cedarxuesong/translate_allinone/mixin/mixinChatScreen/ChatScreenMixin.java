@@ -35,7 +35,7 @@ public class ChatScreenMixin {
             return;
         }
 
-        if (ChatInputTranslateManager.interceptAndTranslate(chatText, addToHistory, (ChatScreen)(Object) this, translated -> {
+        if (ChatInputTranslateManager.interceptAndTranslate(chatText, translated -> {
             isSendingTranslated = true;
             try {
                 ((ChatScreen)(Object) this).sendMessage(translated, addToHistory);

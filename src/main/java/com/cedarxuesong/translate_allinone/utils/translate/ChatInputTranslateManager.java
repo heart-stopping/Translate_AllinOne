@@ -8,7 +8,6 @@ import com.cedarxuesong.translate_allinone.utils.llmapi.ProviderSettings;
 import com.cedarxuesong.translate_allinone.utils.llmapi.openai.OpenAIRequest;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -40,12 +39,10 @@ public class ChatInputTranslateManager {
      * Called from the ChatScreenMixin when the user presses Enter to send a message.
      *
      * @param chatText the message text the user is sending
-     * @param addToHistory whether to add to chat history
-     * @param chatScreen the current ChatScreen instance
      * @param sendCallback callback to invoke on the main thread with the translated text
      * @return true if the message was intercepted for translation (caller should cancel the original send)
      */
-    public static boolean interceptAndTranslate(String chatText, boolean addToHistory, ChatScreen chatScreen, Consumer<String> sendCallback) {
+    public static boolean interceptAndTranslate(String chatText, Consumer<String> sendCallback) {
         ModConfig config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
         if (!config.chatTranslate.input.enabled) {
             return false;
