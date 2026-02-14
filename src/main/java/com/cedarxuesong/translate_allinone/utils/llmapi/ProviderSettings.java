@@ -28,11 +28,11 @@ public record ProviderSettings(OpenAISettings openAISettings, OllamaSettings oll
      */
     public static ProviderSettings fromApiInstance(ApiInstance instance, double temperature, boolean enableStructuredOutput) {
         if (instance.llm_provider == Provider.OPENAI) {
-            Map<String, Object> customParams = toParameterMap(instance.openapi.custom_parameters);
+            Map<String, Object> customParams = toParameterMap(instance.custom_parameters);
             OpenAISettings settings = new OpenAISettings(
-                    instance.openapi.baseUrl,
-                    instance.openapi.apiKey,
-                    instance.openapi.modelId,
+                    instance.baseUrl,
+                    instance.apiKey,
+                    instance.modelId,
                     temperature,
                     enableStructuredOutput,
                     customParams
@@ -41,12 +41,12 @@ public record ProviderSettings(OpenAISettings openAISettings, OllamaSettings oll
         } else if (instance.llm_provider == Provider.OLLAMA) {
             Map<String, Object> options = new java.util.HashMap<>();
             options.put("temperature", temperature);
-            options.putAll(toParameterMap(instance.ollama.custom_parameters));
+            options.putAll(toParameterMap(instance.custom_parameters));
 
             OllamaSettings settings = new OllamaSettings(
-                    instance.ollama.ollamaUrl,
-                    instance.ollama.modelId,
-                    instance.ollama.keep_alive_time,
+                    instance.baseUrl,
+                    instance.modelId,
+                    instance.keep_alive_time,
                     enableStructuredOutput,
                     options
             );
