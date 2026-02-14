@@ -15,11 +15,11 @@ public class LLMApiConfig {
      * Returns the first instance if no match is found, or a default instance if the list is empty.
      */
     public ApiInstance findByName(String name) {
-        if (name == null || name.isEmpty()) {
+        if (name == null || name.isEmpty() || api_instances == null) {
             return getDefaultInstance();
         }
         for (ApiInstance instance : api_instances) {
-            if (name.equals(instance.name)) {
+            if (instance != null && name.equals(instance.name)) {
                 return instance;
             }
         }
