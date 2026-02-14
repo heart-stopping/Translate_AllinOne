@@ -4,8 +4,8 @@ import com.cedarxuesong.translate_allinone.mixin.mixinChatHud.ChatHudAccessor;
 import com.cedarxuesong.translate_allinone.utils.AnimationManager;
 import com.cedarxuesong.translate_allinone.utils.MessageUtils;
 import com.cedarxuesong.translate_allinone.utils.config.ModConfig;
+import com.cedarxuesong.translate_allinone.utils.config.pojos.ApiInstance;
 import com.cedarxuesong.translate_allinone.utils.config.pojos.ChatTranslateConfig;
-import com.cedarxuesong.translate_allinone.utils.config.pojos.Provider;
 import com.cedarxuesong.translate_allinone.utils.llmapi.LLM;
 import com.cedarxuesong.translate_allinone.utils.llmapi.ProviderSettings;
 import com.cedarxuesong.translate_allinone.utils.llmapi.openai.OpenAIRequest;
@@ -152,7 +152,8 @@ public class ChatOutputTranslateManager {
             try {
                 ChatTranslateConfig.ChatOutputTranslateConfig chatOutPutConfig = modConfig.chatTranslate.output;
 
-                ProviderSettings settings = ProviderSettings.fromChatOutputConfig(chatOutPutConfig);
+                ApiInstance apiInstance = modConfig.llmApi.findByName(chatOutPutConfig.api_instance_name);
+                ProviderSettings settings = ProviderSettings.fromApiInstance(apiInstance, chatOutPutConfig.temperature, chatOutPutConfig.enable_structured_output_if_available);
                 LLM llm = new LLM(settings);
 
                 StylePreserver.ExtractionResult extraction = StylePreserver.extractAndMarkWithTags(originalMessage);
@@ -274,13 +275,7 @@ public class ChatOutputTranslateManager {
 
     @NotNull
     private static List<OpenAIRequest.Message> getMessages(ChatTranslateConfig.ChatOutputTranslateConfig chatOutputTranslateConfig, String textToTranslate) {
-        String suffix;
-
-        if (chatOutputTranslateConfig.llm_provider == Provider.OPENAI) {
-            suffix = chatOutputTranslateConfig.openapi.system_prompt_suffix;
-        } else {
-            suffix = chatOutputTranslateConfig.ollama.system_prompt_suffix;
-        }
+        String suffix = chatOutputTranslateConfig.system_prompt_suffix;
 
         String systemPrompt = "You are a chat translation assistant, translating text into " + chatOutputTranslateConfig.target_language + ". You will receive text with style tags, such as `s0>text</s0>`. Please keep these tags wrapping the translated text paragraphs. For example, `<s0>Hello</s0> world` translated into French is `<s0>Bonjour</s0> le monde`. Only output the translation result, keeping all formatting characters, and keeping all words that are uncertain to translate." + suffix;
         return List.of(

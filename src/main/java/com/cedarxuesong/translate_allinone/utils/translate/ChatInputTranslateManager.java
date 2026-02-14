@@ -1,8 +1,8 @@
 package com.cedarxuesong.translate_allinone.utils.translate;
 
 import com.cedarxuesong.translate_allinone.utils.config.ModConfig;
+import com.cedarxuesong.translate_allinone.utils.config.pojos.ApiInstance;
 import com.cedarxuesong.translate_allinone.utils.config.pojos.ChatTranslateConfig;
-import com.cedarxuesong.translate_allinone.utils.config.pojos.Provider;
 import com.cedarxuesong.translate_allinone.utils.llmapi.LLM;
 import com.cedarxuesong.translate_allinone.utils.llmapi.ProviderSettings;
 import com.cedarxuesong.translate_allinone.utils.llmapi.openai.OpenAIRequest;
@@ -55,7 +55,8 @@ public class ChatInputTranslateManager {
         executor.submit(() -> {
             try {
                 ChatTranslateConfig.ChatInputTranslateConfig inputConfig = config.chatTranslate.input;
-                ProviderSettings settings = ProviderSettings.fromChatInputConfig(inputConfig);
+                ApiInstance apiInstance = config.llmApi.findByName(inputConfig.api_instance_name);
+                ProviderSettings settings = ProviderSettings.fromApiInstance(apiInstance, inputConfig.temperature, inputConfig.enable_structured_output_if_available);
                 LLM llm = new LLM(settings);
                 List<OpenAIRequest.Message> apiMessages = getMessages(inputConfig, originalTextRef.get());
 
@@ -145,12 +146,7 @@ public class ChatInputTranslateManager {
 
     @NotNull
     private static List<OpenAIRequest.Message> getMessages(ChatTranslateConfig.ChatInputTranslateConfig inputConfig, String textToTranslate) {
-        String suffix;
-        if (inputConfig.llm_provider == Provider.OPENAI) {
-            suffix = inputConfig.openapi.system_prompt_suffix;
-        } else {
-            suffix = inputConfig.ollama.system_prompt_suffix;
-        }
+        String suffix = inputConfig.system_prompt_suffix;
 
         String systemPrompt = "You are a chat translation assistant, translating user input text into " + inputConfig.target_language + ". Only output the translation result." + suffix;
         return List.of(

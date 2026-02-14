@@ -3,7 +3,6 @@ package com.cedarxuesong.translate_allinone.utils.translate;
 import com.cedarxuesong.translate_allinone.Translate_AllinOne;
 import com.cedarxuesong.translate_allinone.utils.cache.ItemTemplateCache;
 import com.cedarxuesong.translate_allinone.utils.config.pojos.ItemTranslateConfig;
-import com.cedarxuesong.translate_allinone.utils.config.pojos.Provider;
 import com.cedarxuesong.translate_allinone.utils.llmapi.LLM;
 import com.cedarxuesong.translate_allinone.utils.llmapi.ProviderSettings;
 import com.cedarxuesong.translate_allinone.utils.llmapi.openai.OpenAIRequest;
@@ -215,7 +214,11 @@ public class ItemTranslateManager {
             batchForAI.put(String.valueOf(i + 1), originalTexts.get(i));
         }
 
-        ProviderSettings settings = ProviderSettings.fromItemConfig(config);
+        ProviderSettings settings = ProviderSettings.fromApiInstance(
+                Translate_AllinOne.getConfig().llmApi.findByName(config.api_instance_name),
+                config.temperature,
+                config.enable_structured_output_if_available
+        );
         LLM llm = new LLM(settings);
 
         String systemPrompt = buildSystemPrompt(config);
@@ -315,13 +318,8 @@ public class ItemTranslateManager {
     }
 
     private String getSystemPromptSuffix(ItemTranslateConfig config) {
-        if (config.llm_provider == Provider.OPENAI) {
-            return config.openapi != null && config.openapi.system_prompt_suffix != null
-                    ? config.openapi.system_prompt_suffix
-                    : "";
-        }
-        return config.ollama != null && config.ollama.system_prompt_suffix != null
-                ? config.ollama.system_prompt_suffix
+        return config.system_prompt_suffix != null
+                ? config.system_prompt_suffix
                 : "";
     }
 }
