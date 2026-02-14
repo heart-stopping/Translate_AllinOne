@@ -54,6 +54,10 @@ public class ChatOutputTranslateManager {
     }
 
     public static void translate(UUID messageId, Text originalMessage) {
+        translate(messageId, originalMessage, null);
+    }
+
+    public static void translate(UUID messageId, Text originalMessage, ChatHudLine knownLine) {
         if (activeTranslationLines.containsKey(messageId)) {
             return; // Already being translated
         }
@@ -65,14 +69,37 @@ public class ChatOutputTranslateManager {
         int lineIndex = -1;
         ChatHudLine targetLine = null;
 
-        for (int i = 0; i < messages.size(); i++) {
-            ChatHudLine line = messages.get(i);
-            Text lineContent = line.content();
+        if (knownLine != null) {
+            lineIndex = messages.indexOf(knownLine);
+            if (lineIndex != -1) {
+                targetLine = knownLine;
+            }
+        }
 
-            if (lineContent.equals(originalMessage) || (!lineContent.getSiblings().isEmpty() && lineContent.getSiblings().get(0).equals(originalMessage))) {
-                lineIndex = i;
-                targetLine = line;
-                break;
+        if (targetLine == null) {
+            for (int i = 0; i < messages.size(); i++) {
+                ChatHudLine line = messages.get(i);
+                Text lineContent = line.content();
+
+                if (lineContent.equals(originalMessage) || (!lineContent.getSiblings().isEmpty() && lineContent.getSiblings().get(0).equals(originalMessage))) {
+                    lineIndex = i;
+                    targetLine = line;
+                    break;
+                }
+            }
+        }
+
+        if (targetLine == null) {
+            // Fall back to string comparison in case Text.equals() fails due to internal transformations
+            String originalString = originalMessage.getString();
+            for (int i = 0; i < messages.size(); i++) {
+                ChatHudLine line = messages.get(i);
+                String lineString = line.content().getString();
+                if (lineString.equals(originalString)) {
+                    lineIndex = i;
+                    targetLine = line;
+                    break;
+                }
             }
         }
 
