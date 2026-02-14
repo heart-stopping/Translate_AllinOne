@@ -309,17 +309,7 @@ public class ItemTranslateManager {
     }
 
     private String buildSystemPrompt(ItemTranslateConfig config) {
-        String suffix = getSystemPromptSuffix(config);
-        String basePrompt = "Translate each JSON value to " + config.target_language
-                + ". Return JSON only. Keep all keys unchanged. Preserve formatting and tokens exactly"
-                + " (e.g. §a §l §r <...> {...} %s %d %f \\n \\t URLs numbers)."
-                + " If unsure, keep the original value.";
-        return basePrompt + suffix;
-    }
-
-    private String getSystemPromptSuffix(ItemTranslateConfig config) {
-        return config.system_prompt_suffix != null
-                ? config.system_prompt_suffix
-                : "";
+        return config.system_prompt
+                .replace("%target_language%", config.target_language);
     }
 }

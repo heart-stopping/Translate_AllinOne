@@ -275,9 +275,8 @@ public class ChatOutputTranslateManager {
 
     @NotNull
     private static List<OpenAIRequest.Message> getMessages(ChatTranslateConfig.ChatOutputTranslateConfig chatOutputTranslateConfig, String textToTranslate) {
-        String suffix = chatOutputTranslateConfig.system_prompt_suffix;
-
-        String systemPrompt = "You are a chat translation assistant, translating text into " + chatOutputTranslateConfig.target_language + ". You will receive text with style tags, such as `s0>text</s0>`. Please keep these tags wrapping the translated text paragraphs. For example, `<s0>Hello</s0> world` translated into French is `<s0>Bonjour</s0> le monde`. Only output the translation result, keeping all formatting characters, and keeping all words that are uncertain to translate." + suffix;
+        String systemPrompt = chatOutputTranslateConfig.system_prompt
+                .replace("%target_language%", chatOutputTranslateConfig.target_language);
         return List.of(
                 new OpenAIRequest.Message("system", systemPrompt),
                 new OpenAIRequest.Message("user", textToTranslate)

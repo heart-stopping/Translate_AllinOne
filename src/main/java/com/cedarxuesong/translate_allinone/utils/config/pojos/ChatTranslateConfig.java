@@ -34,7 +34,8 @@ public class ChatTranslateConfig {
         public double temperature = 0.7;
         @ConfigEntry.Gui.Tooltip
         public boolean enable_structured_output_if_available = false;
-        public String system_prompt_suffix = "\\no_think";
+        @ConfigEntry.Gui.Tooltip(count = 2)
+        public String system_prompt = "You are a chat translation assistant, translating text into %target_language%. You will receive text with style tags, such as `s0>text</s0>`. Please keep these tags wrapping the translated text paragraphs. For example, `<s0>Hello</s0> world` translated into French is `<s0>Bonjour</s0> le monde`. Only output the translation result, keeping all formatting characters, and keeping all words that are uncertain to translate.";
     }
 
     public static class ChatInputTranslateConfig {
@@ -53,6 +54,7 @@ public class ChatTranslateConfig {
         public double temperature = 0.7;
         @ConfigEntry.Gui.Tooltip
         public boolean enable_structured_output_if_available = false;
-        public String system_prompt_suffix = "\\no_think";
+        @ConfigEntry.Gui.Tooltip(count = 2)
+        public String system_prompt = "You are a chat translation assistant, translating user input text into %target_language%. Only output the translation result.";
     }
 } 
