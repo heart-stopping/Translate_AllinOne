@@ -30,21 +30,19 @@ public abstract class ChatHudMixin {
     private List<ChatHudLine> messages;
 
     @Unique
-    private static final ThreadLocal<Boolean> isModifyingMessage = ThreadLocal.withInitial(() -> false);
+    private static final ThreadLocal<Boolean> isProcessing = ThreadLocal.withInitial(() -> false);
 
     @Unique
     private static final ThreadLocal<UUID> pendingMessageId = new ThreadLocal<>();
 
-    @ModifyVariable(method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V", at = @At("HEAD"), argsOnly = true)
-    private Text onAddMessage(Text message) {
-        pendingMessageId.remove();
-
-        if (isModifyingMessage.get() || !LifecycleEventManager.isReadyForTranslation) {
+    @Unique
+    private Text processMessage(Text message) {
+        if (isProcessing.get() || !LifecycleEventManager.isReadyForTranslation) {
             return message;
         }
 
-        try {
-            isModifyingMessage.set(true);
+        isProcessing.set(true);
+        pendingMessageId.remove();
 
         ModConfig config = AutoConfig.getConfigHolder(ModConfig.class).getConfig();
         if (config.chatTranslate.output.enabled) {
@@ -70,13 +68,15 @@ public abstract class ChatHudMixin {
                 }
         }
         return message;
-        } finally {
-            isModifyingMessage.set(false);
-        }
     }
 
-    @Inject(method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V", at = @At("TAIL"))
-    private void onAddMessageTail(CallbackInfo ci) {
+    @Unique
+    private void processMessageTail() {
+        if (!isProcessing.get()) {
+            return;
+        }
+        isProcessing.set(false);
+
         UUID messageId = pendingMessageId.get();
         if (messageId == null) {
             return;
@@ -90,5 +90,25 @@ public abstract class ChatHudMixin {
                 ChatOutputTranslateManager.translate(messageId, originalMessage, addedLine);
             }
         }
+    }
+
+    @ModifyVariable(method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V", at = @At("HEAD"), argsOnly = true)
+    private Text onAddMessage(Text message) {
+        return processMessage(message);
+    }
+
+    @Inject(method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/client/gui/hud/MessageIndicator;)V", at = @At("TAIL"))
+    private void onAddMessageTail(CallbackInfo ci) {
+        processMessageTail();
+    }
+
+    @ModifyVariable(method = "addMessage(Lnet/minecraft/text/Text;)V", at = @At("HEAD"), argsOnly = true)
+    private Text onAddMessageSimple(Text message) {
+        return processMessage(message);
+    }
+
+    @Inject(method = "addMessage(Lnet/minecraft/text/Text;)V", at = @At("TAIL"))
+    private void onAddMessageSimpleTail(CallbackInfo ci) {
+        processMessageTail();
     }
 } 
