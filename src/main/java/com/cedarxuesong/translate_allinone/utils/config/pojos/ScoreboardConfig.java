@@ -35,7 +35,8 @@ public class ScoreboardConfig {
     public double temperature = 0.7;
     @ConfigEntry.Gui.Tooltip
     public boolean enable_structured_output_if_available = false;
-    public String system_prompt_suffix = "\\no_think";
+    @ConfigEntry.Gui.Tooltip(count = 2)
+    public String system_prompt = "Translate each JSON value to %target_language%. Return JSON only. Keep all keys unchanged. Preserve formatting and tokens exactly (e.g. §a §l §r <...> {...} %s %d %f \\n \\t URLs numbers). If unsure, keep the original value.";
 
     public enum KeybindingMode {
         HOLD_TO_TRANSLATE,

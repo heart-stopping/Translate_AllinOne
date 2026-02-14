@@ -146,9 +146,8 @@ public class ChatInputTranslateManager {
 
     @NotNull
     private static List<OpenAIRequest.Message> getMessages(ChatTranslateConfig.ChatInputTranslateConfig inputConfig, String textToTranslate) {
-        String suffix = inputConfig.system_prompt_suffix;
-
-        String systemPrompt = "You are a chat translation assistant, translating user input text into " + inputConfig.target_language + ". Only output the translation result." + suffix;
+        String systemPrompt = inputConfig.system_prompt
+                .replace("%target_language%", inputConfig.target_language);
         return List.of(
                 new OpenAIRequest.Message("system", systemPrompt),
                 new OpenAIRequest.Message("user", textToTranslate)
