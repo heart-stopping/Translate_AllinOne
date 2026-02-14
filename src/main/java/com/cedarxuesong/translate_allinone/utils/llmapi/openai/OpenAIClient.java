@@ -16,7 +16,9 @@ import java.util.stream.Stream;
 public class OpenAIClient {
 
     private static final Gson GSON = new Gson();
-    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .build();
     private final ProviderSettings.OpenAISettings settings;
 
     public OpenAIClient(ProviderSettings.OpenAISettings settings) {
