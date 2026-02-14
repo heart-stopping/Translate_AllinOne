@@ -5,6 +5,7 @@ import com.cedarxuesong.translate_allinone.registration.LifecycleEventManager;
 import com.cedarxuesong.translate_allinone.utils.AnimationManager;
 import com.cedarxuesong.translate_allinone.utils.MessageUtils;
 import com.cedarxuesong.translate_allinone.utils.config.ModConfig;
+import com.cedarxuesong.translate_allinone.utils.translate.ChatOutputTranslateManager;
 import me.shedaniel.autoconfig.AutoConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.ChatHud;
@@ -46,10 +47,7 @@ public abstract class ChatHudMixin {
 
                 if (config.chatTranslate.output.auto_translate) {
                     MinecraftClient.getInstance().execute(() -> {
-                        if (MinecraftClient.getInstance().player != null
-                                && MinecraftClient.getInstance().player.networkHandler != null) {
-                            MinecraftClient.getInstance().player.networkHandler.sendChatCommand("translate_allinone translatechatline " + messageId);
-                        }
+                        ChatOutputTranslateManager.translate(messageId, message);
                     });
                     return message;
                 } else {
